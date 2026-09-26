@@ -1,0 +1,21 @@
+{
+  "name": "@oryksa/react-native",
+  "version": "1.0.0",
+  "description": "Official React Native SDK for ORYKSA AI Employees: a ready in-app AI chat with the look of the ORYKSA website chat, and a client for the ORYKSA API v1.",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "react-native": "src/index.js",
+  "files": ["src", "README.md", "LICENSE", "CHANGELOG.md"],
+  "sideEffects": false,
+  "scripts": { "test": "node test/client.test.js" },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-native": ">=0.68.0"
+  },
+  "keywords": ["oryksa", "react-native", "ai", "chatbot", "customer-support", "chat", "sdk", "expo"],
+  "homepage": "https://developer.oryksa.com/en/sdks",
+  "repository": { "type": "git", "url": "https://github.com/oryksa/oryksa-react-native" },
+  "bugs": { "url": "https://github.com/oryksa/oryksa-react-native/issues" },
+  "author": "ORYKSA AI Employees (https://oryksa.com)",
+  "license": "MIT"
+}
