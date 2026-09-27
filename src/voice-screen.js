@@ -96,16 +96,27 @@ function OryksaVoiceScreen(props) {
         h(Text, { style: [st.sub, { color: th.muted }] }, pick[1]),
         phase === "hearing" ? h(Text, { style: st.tap }, t.tapToSend) : null,
         h(View, { style: st.row },
-          btn(phase === "muted" ? "🔇" : "🎙️", phase === "muted" ? t.unmute : t.mute, false, () => ctlRef.current && ctlRef.current.toggleMute(), th),
+          btn(h(MicIcon, { color: th.muted, crossed: phase === "muted" }), phase === "muted" ? t.unmute : t.mute, false, () => ctlRef.current && ctlRef.current.toggleMute(), th),
           btn("×", t.close, true, close, th))),
       h(Text, { style: st.pw }, "POWERED BY ", h(Text, { style: { color: th.accent, fontWeight: "800" } }, "ORYKSA"))));
+}
+
+/** A microphone drawn with views (no emoji or icon font needed); crossed = muted. */
+function MicIcon(props) {
+  const c = props.color || "#6B7280";
+  const k = (props.size || 22) / 22;
+  return h(View, { style: { width: 22 * k, height: 22 * k, alignItems: "center" } },
+    h(View, { style: { width: 8 * k, height: 12 * k, borderRadius: 4 * k, borderWidth: 2 * k, borderColor: c } }),
+    h(View, { style: { width: 14 * k, height: 7 * k, marginTop: -4 * k, borderBottomLeftRadius: 7 * k, borderBottomRightRadius: 7 * k, borderWidth: 2 * k, borderTopWidth: 0, borderColor: c } }),
+    h(View, { style: { width: 2 * k, height: 3 * k, backgroundColor: c } }),
+    props.crossed ? h(View, { style: { position: "absolute", top: 10 * k, left: -1 * k, width: 24 * k, height: 2 * k, backgroundColor: c, transform: [{ rotate: "45deg" }] } }) : null);
 }
 
 function btn(icon, label, cancel, onPress, th) {
   const red = "#E05A52";
   return h(Pressable, { onPress, accessibilityRole: "button", accessibilityLabel: label, style: { alignItems: "center" } },
     h(View, { style: [st.cbtn, { backgroundColor: cancel ? "#FDF0EF" : th.background, borderColor: cancel ? "#F3C0BE" : "#ECECF6" }] },
-      h(Text, { style: { fontSize: 22, color: cancel ? red : th.muted } }, icon)),
+      typeof icon === "string" ? h(Text, { style: { fontSize: 22, color: cancel ? red : th.muted } }, icon) : icon),
     h(Text, { style: { marginTop: 8, fontSize: 12, color: cancel ? red : th.muted } }, label));
 }
 
@@ -126,4 +137,4 @@ const st = StyleSheet.create({
   pw: { textAlign: "center", fontSize: 10.5, letterSpacing: 1.3, color: "#9CA3AF", paddingBottom: 22 },
 });
 
-module.exports = { OryksaVoiceScreen, VOICE_TEXTS: VX };
+module.exports = { OryksaVoiceScreen, MicIcon, VOICE_TEXTS: VX };

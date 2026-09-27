@@ -8,7 +8,7 @@
 const React = require("react");
 const RN = require("react-native");
 const { pick } = require("./client");
-const { OryksaVoiceScreen } = require("./voice-screen");
+const { OryksaVoiceScreen, MicIcon } = require("./voice-screen");
 const { createDefaultAudio } = require("./voice");
 
 const h = React.createElement;
@@ -117,7 +117,7 @@ function OryksaChat(props) {
       }),
       voice && audio && agent && agent.voice_replies && !text.trim()
         ? h(Pressable, { onPress: () => setVoiceOpen(true), disabled: busy, accessibilityRole: "button", accessibilityLabel: tx.voice, style: s.micBtn },
-          h(Text, { style: { fontSize: 20, color: th.accent } }, "🎙️"))
+          h(MicIcon, { color: th.accent }))
         : null,
       h(Pressable, { onPress: () => send(text), disabled: busy, style: [s.sendBtn, { backgroundColor: th.accent, opacity: busy ? 0.6 : 1 }] },
         h(Text, { style: s.sendTxt }, tx.send.toUpperCase()))),
