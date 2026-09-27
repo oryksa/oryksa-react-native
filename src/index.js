@@ -9,6 +9,7 @@ const chat = require("./chat");
 const voice = require("./voice");
 const voiceScreen = require("./voice-screen");
 const vad = require("./vad");
+const profanity = require("./profanity");
 
 module.exports = {
   OryksaClient: client.OryksaClient,
@@ -22,4 +23,6 @@ module.exports = {
   OryksaVoiceScreen: voiceScreen.OryksaVoiceScreen,
   createDefaultAudio: voice.createDefaultAudio,
   Vad: vad.Vad,
+  maskProfanity: profanity.mask,
+  loadProfanity: profanity.load,
 };

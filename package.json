@@ -13,7 +13,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js"
+    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js && node test/profanity.test.js"
   },
   "peerDependencies": {
     "react": ">=17.0.0",

@@ -10,6 +10,7 @@ const RN = require("react-native");
 const { pick } = require("./client");
 const { OryksaVoiceScreen, MicIcon } = require("./voice-screen");
 const { createDefaultAudio } = require("./voice");
+const profanity = require("./profanity");
 
 const h = React.createElement;
 const { View, Text, TextInput, Image, Pressable, FlatList, Modal, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, useWindowDimensions } = RN;
@@ -49,6 +50,12 @@ function OryksaChat(props) {
   const [text, setText] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const listRef = React.useRef(null);
+
+  const [, setProfReady] = React.useState(0);
+  React.useEffect(() => {
+    // Swear words the customer types show as asterisks (one list for every ORYKSA chat).
+    profanity.load(L(lang)).then(() => setProfReady((n) => n + 1));
+  }, [lang]);
 
   React.useEffect(() => {
     let alive = true;
@@ -105,7 +112,7 @@ function OryksaChat(props) {
       renderItem: ({ item }) => {
         const mine = item.role === "user";
         return h(View, { style: [s.bubble, mine ? [s.me, { backgroundColor: th.accent }] : [s.ai, { backgroundColor: th.soft }], item.role === "typing" ? { opacity: 0.6 } : null] },
-          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, bold(item.text, { color: mine ? "#fff" : th.ink })));
+          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, bold(mine ? profanity.mask(item.text, L(lang)) : item.text, { color: mine ? "#fff" : th.ink })));
       },
     }),
     sug.length ? h(View, { style: s.sug }, sug.map((q) =>
