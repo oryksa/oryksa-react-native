@@ -16,10 +16,10 @@ const h = React.createElement;
 const { View, Text, TextInput, Image, Pressable, FlatList, Modal, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, useWindowDimensions } = RN;
 
 const TX = {
-  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again.", voice: "Talk by voice" },
-  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo.", voice: "Falar por voz" },
-  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo.", voice: "Falar por voz" },
-  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo.", voice: "Hablar por voz" },
+  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again.", voice: "Talk by voice", copy: "Copy" },
+  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo.", voice: "Falar por voz", copy: "Copiar" },
+  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo.", voice: "Falar por voz", copy: "Copiar" },
+  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo.", voice: "Hablar por voz", copy: "Copiar" },
 };
 const DEFAULT_THEME = { accent: "#5B57E0", ink: "#161B3D", soft: "#EEEBFB", background: "#FFFFFF", muted: "#6B7280" };
 const FALLBACK_AVATAR = "https://oryksa.com/assets/img/avatar_official_oryksa.png";
@@ -111,8 +111,11 @@ function OryksaChat(props) {
       onContentSizeChange: () => listRef.current && listRef.current.scrollToEnd({ animated: true }),
       renderItem: ({ item }) => {
         const mine = item.role === "user";
-        return h(View, { style: [s.bubble, mine ? [s.me, { backgroundColor: th.accent }] : [s.ai, { backgroundColor: th.soft }], item.role === "typing" ? { opacity: 0.6 } : null] },
+        const bubble = h(View, { style: [s.bubble, mine ? [s.me, { backgroundColor: th.accent }] : [s.ai, { backgroundColor: th.soft }], item.role === "typing" ? { opacity: 0.6 } : null] },
           h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, bold(mine ? profanity.mask(item.text, L(lang)) : item.text, { color: mine ? "#fff" : th.ink })));
+        if (mine || item.role === "typing" || !String(item.text || "").trim()) return bubble;
+        // Copy button under each reply of the AI (same as the ORYKSA apps and extension).
+        return h(View, null, bubble, h(CopyButton, { text: String(item.text).replace(/\*\*/g, ""), label: tx.copy, color: th.muted }));
       },
     }),
     sug.length ? h(View, { style: s.sug }, sug.map((q) =>
@@ -169,6 +172,30 @@ function OryksaChatButton(props) {
     h(OryksaChatModal, { client, lang, theme, appContext, voice, audio, visible: open, onClose: () => setOpen(false) }));
 }
 
+/** Copies text: @react-native-clipboard/clipboard when installed, else the Clipboard of older React Native. */
+function copyText(t) {
+  try { const C = require("@react-native-clipboard/clipboard"); (C.default || C).setString(t); return true; } catch (e) {}
+  try { if (RN.Clipboard && RN.Clipboard.setString) { RN.Clipboard.setString(t); return true; } } catch (e) {}
+  return false;
+}
+
+/** Copy icon drawn with views (no icon font): two rounded squares; a check after copying. */
+function CopyGlyph({ color, done }) {
+  if (done) return h(View, { style: { width: 14, height: 14, alignItems: "center", justifyContent: "center" } },
+    h(View, { style: { width: 11, height: 6, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: color, transform: [{ rotate: "-45deg" }], marginTop: -3 } }));
+  return h(View, { style: { width: 14, height: 14 } },
+    h(View, { style: { position: "absolute", left: 0, top: 0, width: 9, height: 9, borderWidth: 1.6, borderColor: color, borderRadius: 2, borderRightWidth: 0, borderBottomWidth: 0 } }),
+    h(View, { style: { position: "absolute", left: 4, top: 4, width: 10, height: 10, borderWidth: 1.6, borderColor: color, borderRadius: 2 } }));
+}
+
+/** Small copy button under a reply: copies the text and shows a check for a moment. */
+function CopyButton({ text, label, color }) {
+  const [done, setDone] = React.useState(false);
+  React.useEffect(() => { if (!done) return undefined; const t = setTimeout(() => setDone(false), 1200); return () => clearTimeout(t); }, [done]);
+  return h(Pressable, { onPress: () => { if (copyText(text)) setDone(true); }, accessibilityRole: "button", accessibilityLabel: label, hitSlop: 8, style: s.copy },
+    h(CopyGlyph, { color, done }));
+}
+
 const s = StyleSheet.create({
   panel: { flex: 1 },
   hd: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#ECEEF6" },
@@ -177,6 +204,7 @@ const s = StyleSheet.create({
   hdSub: { fontSize: 12 },
   close: { fontSize: 26, paddingHorizontal: 6 },
   bubble: { maxWidth: "82%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginBottom: 10 },
+  copy: { alignSelf: "flex-start", padding: 6, marginTop: -6, marginBottom: 6, borderRadius: 7 },
   ai: { alignSelf: "flex-start", borderBottomLeftRadius: 6 },
   me: { alignSelf: "flex-end", borderBottomRightRadius: 6 },
   sug: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 10 },

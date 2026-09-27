@@ -20,7 +20,8 @@
     "react-native": ">=0.68.0",
     "react-native-live-audio-stream": ">=1.1.0",
     "react-native-sound": ">=0.11.0",
-    "react-native-fs": ">=2.18.0"
+    "react-native-fs": ">=2.18.0",
+    "@react-native-clipboard/clipboard": ">=1.11.0"
   },
   "keywords": [
     "oryksa",
@@ -51,6 +52,9 @@
       "optional": true
     },
     "react-native-fs": {
+      "optional": true
+    },
+    "@react-native-clipboard/clipboard": {
       "optional": true
     }
   }

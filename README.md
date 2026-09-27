@@ -32,6 +32,8 @@ npm install react-native-live-audio-stream react-native-sound react-native-fs
 
 Without them the chat works and the microphone is hidden. Expo or another audio stack: pass your own `audio` adapter (`startMic`, `stopMic`, `play`, `stopPlayback`).
 
+Each reply of the AI has a copy button under it. It uses `@react-native-clipboard/clipboard` when installed (optional peer dependency: `npm install @react-native-clipboard/clipboard`); older React Native versions use the built-in `Clipboard`.
+
 ```jsx
 <OryksaChatButton client={client} lang="pt"
   appContext={() => ({ screen: "product", title: "Sky Beginner Snowboard, 489.95" })} />
