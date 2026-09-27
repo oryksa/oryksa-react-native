@@ -1,21 +1,57 @@
 {
   "name": "@oryksa/react-native",
-  "version": "1.0.0",
-  "description": "Official React Native SDK for ORYKSA AI Employees: a ready in-app AI chat with the look of the ORYKSA website chat, and a client for the ORYKSA API v1.",
+  "version": "1.1.0",
+  "description": "Official React Native SDK for ORYKSA AI Employees: a ready in-app AI chat and voice (the same as the ORYKSA app), and a client for the ORYKSA API v1.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "react-native": "src/index.js",
-  "files": ["src", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "sideEffects": false,
-  "scripts": { "test": "node test/client.test.js" },
+  "scripts": {
+    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js"
+  },
   "peerDependencies": {
     "react": ">=17.0.0",
-    "react-native": ">=0.68.0"
+    "react-native": ">=0.68.0",
+    "react-native-live-audio-stream": ">=1.1.0",
+    "react-native-sound": ">=0.11.0",
+    "react-native-fs": ">=2.18.0"
   },
-  "keywords": ["oryksa", "react-native", "ai", "chatbot", "customer-support", "chat", "sdk", "expo"],
+  "keywords": [
+    "oryksa",
+    "react-native",
+    "ai",
+    "chatbot",
+    "customer-support",
+    "chat",
+    "sdk",
+    "expo",
+    "voice"
+  ],
   "homepage": "https://developer.oryksa.com/en/sdks",
-  "repository": { "type": "git", "url": "https://github.com/oryksa/oryksa-react-native" },
-  "bugs": { "url": "https://github.com/oryksa/oryksa-react-native/issues" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oryksa/oryksa-react-native"
+  },
+  "bugs": {
+    "url": "https://github.com/oryksa/oryksa-react-native/issues"
+  },
   "author": "ORYKSA AI Employees (https://oryksa.com)",
-  "license": "MIT"
+  "license": "MIT",
+  "peerDependenciesMeta": {
+    "react-native-live-audio-stream": {
+      "optional": true
+    },
+    "react-native-sound": {
+      "optional": true
+    },
+    "react-native-fs": {
+      "optional": true
+    }
+  }
 }

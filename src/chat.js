@@ -1,6 +1,6 @@
 /*!
- * @oryksa/react-native - the ORYKSA chat for React Native, with the look of the
- * ORYKSA website chat (name and photo of the AI come from the ORYKSA account).
+ * @oryksa/react-native - the ORYKSA chat for React Native: name and photo of the AI from
+ * the ORYKSA account, with voice (the same behaviour as the ORYKSA app).
  * License: MIT
  */
 "use strict";
@@ -8,23 +8,39 @@
 const React = require("react");
 const RN = require("react-native");
 const { pick } = require("./client");
+const { OryksaVoiceScreen } = require("./voice-screen");
+const { createDefaultAudio } = require("./voice");
 
 const h = React.createElement;
 const { View, Text, TextInput, Image, Pressable, FlatList, Modal, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, useWindowDimensions } = RN;
 
 const TX = {
-  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again." },
-  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo." },
-  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo." },
-  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo." },
+  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again.", voice: "Talk by voice" },
+  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo.", voice: "Falar por voz" },
+  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo.", voice: "Falar por voz" },
+  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo.", voice: "Hablar por voz" },
 };
 const DEFAULT_THEME = { accent: "#5B57E0", ink: "#161B3D", soft: "#EEEBFB", background: "#FFFFFF", muted: "#6B7280" };
 const FALLBACK_AVATAR = "https://oryksa.com/assets/img/avatar_official_oryksa.png";
 const L = (lang) => (TX[lang] ? lang : "en");
 
-/** The chat panel: header with the photo and name of the AI, messages, suggestions and the input. */
+/** Text with **bold** parts (the server marks them, the app only draws them). */
+function bold(text, style) {
+  const parts = String(text).split("**");
+  if (parts.length < 3) return text;
+  return parts.map((p, i) => (p ? (i % 2 === 1 ? h(Text, { key: i, style: [style, { fontWeight: "700" }] }, p) : p) : null));
+}
+
+/**
+ * The chat panel: header with the photo and name of the AI, messages, suggestions, input and (when
+ * the plan has voice and an audio adapter is available) the microphone that opens the voice screen.
+ * Props: client, lang, theme, onClose, appContext (() => ({ screen, title, items })), voice (default
+ * true), audio (adapter; default: react-native-live-audio-stream + react-native-sound + react-native-fs).
+ */
 function OryksaChat(props) {
-  const { client, lang = "en", theme, onClose } = props;
+  const { client, lang = "en", theme, onClose, appContext, voice = true } = props;
+  const audio = React.useMemo(() => props.audio || createDefaultAudio(), [props.audio]);
+  const [voiceOpen, setVoiceOpen] = React.useState(false);
   const th = Object.assign({}, DEFAULT_THEME, theme || {});
   const tx = TX[L(lang)];
   const [agent, setAgent] = React.useState(null);
@@ -64,7 +80,7 @@ function OryksaChat(props) {
     const id = String(Date.now());
     setMsgs((m) => m.concat([{ id: id + "u", role: "user", text: q }, { id: id + "t", role: "typing", text: "..." }]));
     let reply = null;
-    try { reply = await client.sendAndWait(q); } catch (_) { reply = null; }
+    try { reply = await client.sendAndWait(q, { appContext: appContext ? appContext() : undefined }); } catch (_) { reply = null; }
     setMsgs((m) => m.filter((x) => x.role !== "typing").concat([{ id: id + "a", role: "assistant", text: reply || tx.err }]));
     setBusy(false);
   }, [busy, client, tx]);
@@ -89,7 +105,7 @@ function OryksaChat(props) {
       renderItem: ({ item }) => {
         const mine = item.role === "user";
         return h(View, { style: [s.bubble, mine ? [s.me, { backgroundColor: th.accent }] : [s.ai, { backgroundColor: th.soft }], item.role === "typing" ? { opacity: 0.6 } : null] },
-          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, item.text));
+          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, bold(item.text, { color: mine ? "#fff" : th.ink })));
       },
     }),
     sug.length ? h(View, { style: s.sug }, sug.map((q) =>
@@ -99,9 +115,19 @@ function OryksaChat(props) {
         value: text, onChangeText: setText, placeholder: tx.ph, placeholderTextColor: "#9CA3AF", maxLength: 2000,
         style: [s.input, { color: th.ink }], returnKeyType: "send", onSubmitEditing: () => send(text),
       }),
+      voice && audio && agent && agent.voice_replies && !text.trim()
+        ? h(Pressable, { onPress: () => setVoiceOpen(true), disabled: busy, accessibilityRole: "button", accessibilityLabel: tx.voice, style: s.micBtn },
+          h(Text, { style: { fontSize: 20, color: th.accent } }, "🎙️"))
+        : null,
       h(Pressable, { onPress: () => send(text), disabled: busy, style: [s.sendBtn, { backgroundColor: th.accent, opacity: busy ? 0.6 : 1 }] },
         h(Text, { style: s.sendTxt }, tx.send.toUpperCase()))),
-    h(Text, { style: s.pw }, "POWERED BY ", h(Text, { style: { color: th.accent, fontWeight: "800" } }, "ORYKSA")));
+    h(Text, { style: s.pw }, "POWERED BY ", h(Text, { style: { color: th.accent, fontWeight: "800" } }, "ORYKSA")),
+    voiceOpen ? h(OryksaVoiceScreen, {
+      client, agent, visible: true, lang: L(lang), theme: th, appContext, audio,
+      onClose: () => setVoiceOpen(false),
+      onUserText: (t) => { setSug([]); setMsgs((m) => m.concat([{ id: "v" + Date.now() + "u", role: "user", text: t }])); },
+      onReply: (t) => setMsgs((m) => m.concat([{ id: "v" + Date.now() + "a", role: "assistant", text: t }])),
+    }) : null);
 }
 
 /** Full-screen (phone) or floating (tablet) modal with the chat. */
@@ -116,7 +142,7 @@ function OryksaChatModal(props) {
 
 /** Floating "Talk to name" button with the photo of the AI. Opens the chat. */
 function OryksaChatButton(props) {
-  const { client, lang = "en", theme, position = "right", style } = props;
+  const { client, lang = "en", theme, position = "right", style, appContext, voice, audio } = props;
   const th = Object.assign({}, DEFAULT_THEME, theme || {});
   const [agent, setAgent] = React.useState(null);
   const [open, setOpen] = React.useState(false);
@@ -133,7 +159,7 @@ function OryksaChatButton(props) {
     },
       h(Image, { source: { uri: (agent && agent.avatar) || FALLBACK_AVATAR }, style: s.fabImg }),
       h(Text, { style: s.fabTxt }, (tx.talk + " " + ((agent && agent.name) || "ORYKSA")).toUpperCase())),
-    h(OryksaChatModal, { client, lang, theme, visible: open, onClose: () => setOpen(false) }));
+    h(OryksaChatModal, { client, lang, theme, appContext, voice, audio, visible: open, onClose: () => setOpen(false) }));
 }
 
 const s = StyleSheet.create({
@@ -152,6 +178,7 @@ const s = StyleSheet.create({
   input: { flex: 1, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14 },
   sendBtn: { justifyContent: "center", paddingHorizontal: 18 },
   sendTxt: { color: "#fff", fontWeight: "800", letterSpacing: 1.2 },
+  micBtn: { justifyContent: "center", paddingHorizontal: 12 },
   pw: { textAlign: "center", fontSize: 10.5, letterSpacing: 1.3, color: "#9CA3AF", paddingTop: 6, paddingBottom: 8 },
   wideWrap: { flex: 1, alignItems: "flex-end", justifyContent: "flex-end", padding: 22, paddingBottom: 92 },
   wideCard: { width: 380, height: 560, borderRadius: 20, overflow: "hidden", backgroundColor: "#fff", elevation: 16, shadowColor: "#161B3D", shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: 12 } },

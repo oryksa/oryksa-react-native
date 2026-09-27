@@ -6,6 +6,9 @@
 
 const client = require("./client");
 const chat = require("./chat");
+const voice = require("./voice");
+const voiceScreen = require("./voice-screen");
+const vad = require("./vad");
 
 module.exports = {
   OryksaClient: client.OryksaClient,
@@ -15,4 +18,8 @@ module.exports = {
   OryksaChatModal: chat.OryksaChatModal,
   OryksaChatButton: chat.OryksaChatButton,
   DEFAULT_THEME: chat.DEFAULT_THEME,
+  OryksaVoiceController: voice.OryksaVoiceController,
+  OryksaVoiceScreen: voiceScreen.OryksaVoiceScreen,
+  createDefaultAudio: voice.createDefaultAudio,
+  Vad: vad.Vad,
 };
