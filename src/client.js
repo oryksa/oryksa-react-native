@@ -6,7 +6,7 @@
 "use strict";
 
 const DEFAULT_BASE = "https://api.oryksa.com/v1";
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 
 class OryksaError extends Error {
   constructor(status, code, message, extra) {

@@ -68,7 +68,8 @@ function OryksaVoiceScreen(props) {
   const ctl = ctlRef.current;
   const pick = {
     starting: [t.listening, t.listeningSub], listening: [t.listening, t.listeningSub], hearing: [t.listening, t.hearing],
-    thinking: [(ctl && ctl.lastHeard) || "...", t.thinking], speaking: [(agent && agent.name) || "ORYKSA", (ctl && ctl.lastReply) || ""],
+    // never the words the person said on screen: only "listening" in the interface language; her answer shows as text
+    thinking: [t.listening, t.thinking], speaking: [(agent && agent.name) || "ORYKSA", (ctl && ctl.lastReply) || ""],
     muted: [t.muted, t.mutedSub], micError: [t.micError, t.micErrorSub], noisy: [t.noisy, t.noisySub],
     notUnderstood: [t.notUnderstood, t.notUnderstoodSub],
   }[phase] || [t.listening, t.listeningSub];

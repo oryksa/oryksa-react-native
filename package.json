@@ -1,6 +1,6 @@
 {
   "name": "@oryksa/react-native",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Official React Native SDK for ORYKSA AI Employees: a ready in-app AI chat and voice (the same as the ORYKSA app), and a client for the ORYKSA API v1.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
