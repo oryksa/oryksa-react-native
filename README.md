@@ -2,35 +2,13 @@
 
 # @oryksa/react-native
 
-Official React Native SDK for **ORYKSA AI Employees**. Put an AI employee that already knows your business inside your iOS and Android app (React Native or Expo): a ready chat with the same look as the ORYKSA website chat, the name and photo of your AI from your ORYKSA account, in English, Portuguese (Portugal and Brazil) and Spanish.
+[![English](https://img.shields.io/badge/English-0891b2?style=for-the-badge)](README.md) [![Português](https://img.shields.io/badge/Portugu%C3%AAs-30363d?style=for-the-badge)](README.pt.md) [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363d?style=for-the-badge)](README.es.md) [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363d?style=for-the-badge)](README.fr.md)
+
+Official React Native SDK for **ORYKSA AI Employees**. Put an AI employee that already knows your business inside your iOS and Android app (React Native or Expo): a ready chat with the same look as the ORYKSA website chat, the name and photo of your AI from your ORYKSA account, in English, Portuguese and Spanish.
 
 * Docs: https://developer.oryksa.com/en/sdks
 * API: `https://api.oryksa.com/v1`
 * No native code: works in Expo Go.
-
-**Read in:** English (this page), or open your language:
-
-<details>
-<summary><b>Português</b></summary>
-
-SDK oficial de React Native da **ORYKSA AI Employees**: põe na tua app iOS e Android um colaborador de IA que já conhece o teu negócio, com um chat pronto igual ao chat do site da ORYKSA, com o nome e a foto da tua IA.
-
-1. O teu **servidor** guarda a chave secreta e cria um token de sessão para cada utilizador (`POST /v1/sessions`).
-2. A **app** usa só esse token: `new OryksaClient({ getToken })` e `<OryksaChatButton client={client} lang="pt" />`.
-3. Cada resposta da IA conta como uma interação do teu plano.
-
-</details>
-
-<details>
-<summary><b>Español</b></summary>
-
-SDK oficial de React Native de **ORYKSA AI Employees**: pon en tu app iOS y Android un empleado de IA que ya conoce tu negocio, con un chat listo igual al chat de la web de ORYKSA, con el nombre y la foto de tu IA.
-
-1. Tu **servidor** guarda la clave secreta y crea un token de sesión para cada usuario (`POST /v1/sessions`).
-2. La **app** usa solo ese token: `new OryksaClient({ getToken })` y `<OryksaChatButton client={client} lang="es" />`.
-3. Cada respuesta de la IA cuenta como una interacción de tu plan.
-
-</details>
 
 ## Install
 
