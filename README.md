@@ -11,24 +11,13 @@ Official React Native SDK for **ORYKSA AI Employees**. Put an AI employee that a
 **Read in:** English (this page), or open your language:
 
 <details>
-<summary><b>Português (Portugal)</b></summary>
+<summary><b>Português</b></summary>
 
 SDK oficial de React Native da **ORYKSA AI Employees**: põe na tua app iOS e Android um colaborador de IA que já conhece o teu negócio, com um chat pronto igual ao chat do site da ORYKSA, com o nome e a foto da tua IA.
 
 1. O teu **servidor** guarda a chave secreta e cria um token de sessão para cada utilizador (`POST /v1/sessions`).
 2. A **app** usa só esse token: `new OryksaClient({ getToken })` e `<OryksaChatButton client={client} lang="pt" />`.
 3. Cada resposta da IA conta como uma interação do teu plano.
-
-</details>
-
-<details>
-<summary><b>Português (Brasil)</b></summary>
-
-SDK oficial de React Native da **ORYKSA AI Employees**: coloque no seu app iOS e Android um colaborador de IA que já conhece o seu negócio, com um chat pronto igual ao chat do site da ORYKSA, com o nome e a foto da sua IA.
-
-1. Seu **servidor** guarda a chave secreta e cria um token de sessão para cada usuário (`POST /v1/sessions`).
-2. O **app** usa só esse token: `new OryksaClient({ getToken })` e `<OryksaChatButton client={client} lang="br" />`.
-3. Cada resposta da IA conta como uma interação do seu plano.
 
 </details>
 
