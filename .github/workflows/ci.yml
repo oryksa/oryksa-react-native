@@ -11,3 +11,16 @@ jobs:
         with: { node-version: '20' }
       - name: Client, voice engine and voice conversation tests
         run: npm test
+  readme-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: The README theme code type-checks against the SDK types (React and React Native types installed)
+        run: |
+          mkdir -p /tmp/ts && cd /tmp/ts && npm init -y >/dev/null
+          npm i --legacy-peer-deps typescript@5.6 @types/react@18 react@18 react-native@0.76 >/dev/null 2>&1
+          cd "$GITHUB_WORKSPACE" && ln -s /tmp/ts/node_modules node_modules
+          npx --no-install tsc -p test/readme/tsconfig.json && echo "README theme code: OK"
+
