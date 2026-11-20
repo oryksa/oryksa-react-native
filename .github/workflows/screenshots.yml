@@ -1,0 +1,45 @@
+name: Screenshots
+on:
+  workflow_dispatch:
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Bundle the SDK with React Native for Web (the native audio libraries stay out, so no microphone)
+        run: |
+          mkdir -p /tmp/rnw && cd /tmp/rnw && npm init -y >/dev/null
+          npm i react@18 react-dom@18 react-native-web@0.19 esbuild@0.24 puppeteer-core@23 >/dev/null 2>&1
+          cd "$GITHUB_WORKSPACE" && ln -s /tmp/rnw/node_modules node_modules
+          npx --no-install esbuild test/web/app.js --bundle --outfile=test/web/bundle.js --platform=browser \
+            --alias:react-native=react-native-web --loader:.js=jsx --jsx=automatic \
+            --define:process.env.NODE_ENV='"production"' --define:global=window \
+            --external:react-native-live-audio-stream --external:react-native-sound --external:react-native-fs --external:@react-native-clipboard/clipboard
+      - name: Screenshots in Chrome at phone size (412x892, 3x)
+        env: { ORYKSA_TEST_TOKEN: "${{ secrets.ORYKSA_TEST_TOKEN }}" }
+        run: |
+          mkdir -p shots
+          (cd test/web && python3 -m http.server 8080 >/dev/null 2>&1 &)
+          cat > /tmp/rnw/shot.js <<'JS'
+          const puppeteer = require('puppeteer-core');
+          (async () => {
+            const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+            for (const l of ['en', 'pt']) for (const s of ['product', 'chat', 'theme']) {
+              const p = await b.newPage();
+              const errors = [];
+              p.on('pageerror', e => errors.push(String(e)));
+              await p.setViewport({ width: 412, height: 892, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+              await p.goto('http://localhost:8080/index.html?t=' + encodeURIComponent(process.env.ORYKSA_TEST_TOKEN) + '&screen=' + s + '&lang=' + l, { waitUntil: 'networkidle0', timeout: 60000 });
+              await new Promise(r => setTimeout(r, 6000));
+              console.log(s, l, 'errors', errors.length, errors.slice(0, 2).join(' | '));
+              await p.screenshot({ path: process.env.GITHUB_WORKSPACE + '/shots/rn_' + s + '_' + l + '.png' });
+              await p.close();
+            }
+            await b.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          JS
+          node /tmp/rnw/shot.js
+      - uses: actions/upload-artifact@v4
+        with: { name: rn-screenshots, path: shots/*.png }
