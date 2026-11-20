@@ -10,6 +10,12 @@ SDK oficial de React Native de **ORYKSA AI Employees**. Pon dentro de tu app iOS
 * API: `https://api.oryksa.com/v1`
 * Sin código nativo: funciona en Expo Go.
 
+## Capturas de pantalla
+
+<p align="center"><img src="docs/screenshots/rn_product_en.png" width="230" alt="Product page with the chat button"> <img src="docs/screenshots/rn_chat_en.png" width="230" alt="Chat"> <img src="docs/screenshots/rn_theme_en.png" width="230" alt="Chat with the README theme"></p>
+
+Los propios componentes del SDK, dibujados por el CI en Chrome a tamaño de móvil con React Native for Web y una cuenta de prueba de ORYKSA (`test/web/`). En el móvil el chat muestra también el micrófono, que necesita las bibliotecas de audio nativas. El chat verde usa el código de *Colores y tema*, más abajo.
+
 ## Instalar
 
 ```bash
