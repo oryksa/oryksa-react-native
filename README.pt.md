@@ -85,6 +85,18 @@ await oryksa.learnApp({ name: "FitTrack", description: "...", screens: [...], fa
 
 As chamadas falhadas lançam `OryksaError` com `status`, `code` (por exemplo `interaction_limit_reached`, `rate_limited`, `plan_required`) e `message`.
 
+## Cores e tema
+
+A prop `theme` recebe um objeto com até cinco cores em texto hexadecimal: `accent` (botões, balões do visitante, ligações), `ink` (texto principal), `soft` (balões da IA), `background` (painel) e `muted` (texto secundário). As chaves em falta mantêm o valor por omissão, por isso `{ accent: "#0E8A6B" }` basta. Funciona em `OryksaChatButton`, `OryksaChatModal` e `OryksaChat`, e os valores por omissão são exportados como `DEFAULT_THEME`.
+
+```jsx
+const theme = { accent: "#0E8A6B" };
+
+<OryksaChatButton client={client} lang="en" theme={theme} />
+```
+
+Não há tema escuro automático: para o modo escuro, passa as tuas próprias cores escuras.
+
 ---
 
 ## Sobre o autor
