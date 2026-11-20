@@ -14,7 +14,7 @@ SDK React Native officiel d'**ORYKSA AI Employees**. Mettez dans votre app iOS e
 
 ## Captures d'écran
 
-<p align="center"><img src="docs/screenshots/rn_product_en.png" width="230" alt="Product page with the chat button"> <img src="docs/screenshots/rn_chat_en.png" width="230" alt="Chat"> <img src="docs/screenshots/rn_theme_en.png" width="230" alt="Chat with the README theme"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/oryksa/oryksa-react-native/main/docs/screenshots/rn_product_en.png" width="230" alt="Product page with the chat button"> <img src="https://raw.githubusercontent.com/oryksa/oryksa-react-native/main/docs/screenshots/rn_chat_en.png" width="230" alt="Chat"> <img src="https://raw.githubusercontent.com/oryksa/oryksa-react-native/main/docs/screenshots/rn_theme_en.png" width="230" alt="Chat with the README theme"></p>
 
 Les composants du SDK eux-mêmes, affichés par la CI dans Chrome au format téléphone avec React Native for Web et un compte de test ORYKSA (`test/web/`). Sur un téléphone, le chat affiche aussi le micro, qui nécessite les bibliothèques audio natives. Le chat vert utilise le code de *Couleurs et thème*, plus bas.
 
