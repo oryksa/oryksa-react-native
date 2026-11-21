@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "files": ["readme-theme.tsx", "readme-links.tsx"]
+  "files": ["readme-theme.tsx", "readme-links.tsx", "readme-attach.tsx"]
 }

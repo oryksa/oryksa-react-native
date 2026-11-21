@@ -65,6 +65,32 @@ The links the AI gives can be tapped in the chat (web addresses and e-mails), an
 
 `onLink` is also on `OryksaChat`, `OryksaChatModal` and `OryksaVoiceScreen`.
 
+## Attach a photo or a document (1.1.3)
+
+The chat has an attach button (a paperclip, on by default): a photo from the library, a photo from the camera, or a document (PDF, Word, text, CSV, up to 8 MB). The AI looks at the photo (made smaller to 1600 pixels, JPEG 80%, up to 2 MB) and reads the document; the customer's bubble shows the photo, or the document icon and its name. `attachments={false}` hides the button.
+
+React Native has no picker of its own, so the SDK uses two optional libraries your app installs (optional peer dependencies, like the voice libraries). Each choice shows only when its library is there; without both, the button is hidden:
+
+```sh
+npm install react-native-image-picker @react-native-documents/picker
+```
+
+* `react-native-image-picker`: photo library and camera. iOS Info.plist: `NSPhotoLibraryUsageDescription` and `NSCameraUsageDescription`. Android: no permission for the photo library; for the camera, `CAMERA` is needed only if your app declares it in its own manifest (then grant it before the camera opens).
+* `@react-native-documents/picker`: documents, in the system document picker (no permission). Documents are read with `react-native-fs` when installed, else with `fetch`.
+
+```jsx
+<OryksaChatButton client={client} lang="en" attachments={false} /> {/* no attach button */}
+
+// Expo or another stack: your own pickers (a missing one hides that choice)
+const picker = {
+  pickPhoto: () => myPhotoPicker(), // { base64, mime } made smaller (1600 px, JPEG 80%), or null
+  pickDocument: () => myDocumentPicker(), // { base64, name, mime }, or null
+};
+<OryksaChat client={client} picker={picker} />
+```
+
+Without the UI: `client.send("Here is the quote", { file: { base64, name: "quote.pdf", mime: "application/pdf" } })` (photos: `{ image: { base64, mime } }`).
+
 ## How it works (and why the key stays safe)
 
 1. Your **server** keeps the secret API key (`oryk_live_...`, created at developer.oryksa.com) and creates a short-lived **session token** for each signed-in user with `POST /v1/sessions` (with `@oryksa/sdk` on Node: `oryksa.createSession(...)`).

@@ -35,7 +35,17 @@ export interface OryksaAppContext {
   items?: string[];
 }
 
+/** A photo from the customer (JPEG, PNG or WebP, up to 2 MB). The AI looks at it. */
+export interface OryksaImage { base64: string; mime?: string }
+
+/** A document from the customer (PDF, Word, text or CSV, up to 8 MB). The AI reads it. */
+export interface OryksaFile { base64: string; name: string; mime?: string }
+
 export interface OryksaSendOptions {
+  /** A photo from the customer (sent as image_base64 / image_mime). */
+  image?: OryksaImage;
+  /** A document from the customer (sent as file_base64 / file_name / file_mime). */
+  file?: OryksaFile;
   appContext?: OryksaAppContext;
   /** The reply will be heard: it also carries a short `speech`. */
   voice?: boolean;
@@ -166,6 +176,10 @@ interface OryksaChatVoiceProps {
   audio?: OryksaAudio | null;
   /** What your app does with a link the AI gave: return true when your app opened it, false to let the system open it. */
   onLink?: OryksaLinkHandler;
+  /** Shows the attach button (photo library, camera, document). Default true; it shows only when a picker is available. */
+  attachments?: boolean;
+  /** Picker adapter (default: createDefaultPicker()). */
+  picker?: OryksaPicker | null;
 }
 
 export declare function OryksaChat(props: { client: OryksaClient; lang?: OryksaLang; theme?: OryksaTheme; onClose?: () => void } & OryksaChatVoiceProps): React.ReactElement;
@@ -183,6 +197,35 @@ export declare function OryksaLinkCard(props: {
   url: string; client: OryksaClient; openLabel?: string; onLink?: OryksaLinkHandler; onOpened?: () => void;
   theme?: OryksaTheme & { line?: string }; style?: StyleProp<ViewStyle>;
 }): React.ReactElement;
+
+/** What a picker gives back: a photo ({ base64, mime }), a document ({ base64, name, mime } or { tooBig: true }), or null when cancelled. */
+export interface OryksaPicked { base64?: string; name?: string; mime?: string; tooBig?: boolean }
+
+/**
+ * The pickers of the attach button (bring your own for Expo or another stack). Photos should come made
+ * smaller (1600 px, JPEG about 80%). A missing function hides that choice.
+ */
+export interface OryksaPicker {
+  pickPhoto?: (() => Promise<OryksaPicked | null>) | null;
+  takePhoto?: (() => Promise<OryksaPicked | null>) | null;
+  pickDocument?: (() => Promise<OryksaPicked | null>) | null;
+}
+
+/** The default pickers: react-native-image-picker and @react-native-documents/picker when installed (null if neither is). */
+export declare function createDefaultPicker(): OryksaPicker | null;
+
+export type OryksaAttachResult = { image: OryksaImage } | { file: OryksaFile } | { error: "big" | "failed" };
+
+/** A picked photo as what the chat sends ({ error: "big" } above 2 MB). */
+export declare function photoAttachment(p: OryksaPicked | null): OryksaAttachResult;
+
+/** A picked document as what the chat sends: pictures up to 2 MB as a photo, the rest as a file up to 8 MB. */
+export declare function documentAttachment(d: OryksaPicked | null): OryksaAttachResult;
+
+/** 2 MB: the largest photo the chat sends. */
+export declare const MAX_PHOTO_BYTES: number;
+/** 8 MB: the largest document the chat sends. */
+export declare const MAX_FILE_BYTES: number;
 
 /** The distinct web links of text, in order, without the final punctuation (at most max, 3 by default). */
 export declare function linksIn(text: string, max?: number): string[];

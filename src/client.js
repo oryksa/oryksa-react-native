@@ -153,18 +153,15 @@ class OryksaClient {
   /**
    * Sends a message. status is "pending" when the AI needs a few more seconds: use sendAndWait.
    * @param {string} message
-   * @param {{appContext?: {screen?: string, title?: string, items?: string[]}, voice?: boolean, whisper?: boolean, voiceStats?: object}} [opts]
+   * @param {{appContext?: {screen?: string, title?: string, items?: string[]}, voice?: boolean, whisper?: boolean, voiceStats?: object,
+   *          image?: {base64: string, mime?: string}, file?: {base64: string, name: string, mime?: string}}} [opts]
    *   appContext: the screen the customer is on inside your app, so the AI answers about it.
    *   voice: the reply will be heard (it also carries a short `speech`). whisper: the customer whispered.
+   *   image: a photo from the customer, the AI looks at it (up to 2 MB).
+   *   file: a document from the customer (PDF, Word, text, CSV), the AI reads it (up to 8 MB).
    */
   send(message, opts) {
-    const o = opts || {};
-    const body = { message };
-    if (o.appContext) body.app_context = appContextJson(o.appContext);
-    if (o.voice) body.voice = true;
-    if (o.whisper) body.whisper = true;
-    if (o.voiceStats) { body.platform = "rn"; body.voice_stats = o.voiceStats; }
-    return this._req("POST", "/client/chat", body);
+    return this._req("POST", "/client/chat", chatBody(message, opts));
   }
 
   /** Like sendAndWait, but returns the whole reply object ({ status, reply, speech, whisper }). */
@@ -237,6 +234,21 @@ class OryksaClient {
   }
 }
 
+/** The JSON of POST /v1/client/chat. */
+function chatBody(message, opts) {
+  const o = opts || {};
+  const body = { message };
+  if (o.appContext) body.app_context = appContextJson(o.appContext);
+  if (o.voice) body.voice = true;
+  if (o.whisper) body.whisper = true;
+  if (o.voiceStats) { body.platform = "rn"; body.voice_stats = o.voiceStats; }
+  if (o.image && o.image.base64) { body.image_base64 = o.image.base64; body.image_mime = o.image.mime || "image/jpeg"; }
+  if (o.file && typeof o.file.base64 === "string") {
+    body.file_base64 = o.file.base64; body.file_name = o.file.name || "file"; body.file_mime = o.file.mime || "application/octet-stream";
+  }
+  return body;
+}
+
 /** JSON of an app context: { screen, title, items (up to 20) }. */
 function appContextJson(c) {
   const o = {};
@@ -252,4 +264,4 @@ function pick(map, lang) {
   return map[lang] || (lang === "br" ? map.pt : undefined) || map.en || Object.values(map)[0];
 }
 
-module.exports = { OryksaClient, OryksaError, pick, appContextJson, multipart, VERSION, DEFAULT_BASE };
+module.exports = { OryksaClient, OryksaError, pick, appContextJson, chatBody, multipart, VERSION, DEFAULT_BASE };

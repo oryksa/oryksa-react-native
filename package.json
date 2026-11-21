@@ -13,7 +13,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js && node test/profanity.test.js && node test/links.test.js"
+    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js && node test/profanity.test.js && node test/links.test.js && node test/attach.test.js"
   },
   "peerDependencies": {
     "react": ">=17.0.0",
@@ -21,7 +21,9 @@
     "react-native-live-audio-stream": ">=1.1.0",
     "react-native-sound": ">=0.11.0",
     "react-native-fs": ">=2.18.0",
-    "@react-native-clipboard/clipboard": ">=1.11.0"
+    "@react-native-clipboard/clipboard": ">=1.11.0",
+    "react-native-image-picker": ">=7.0.0",
+    "@react-native-documents/picker": ">=10.0.0"
   },
   "keywords": [
     "oryksa",
@@ -55,6 +57,12 @@
       "optional": true
     },
     "@react-native-clipboard/clipboard": {
+      "optional": true
+    },
+    "react-native-image-picker": {
+      "optional": true
+    },
+    "@react-native-documents/picker": {
       "optional": true
     }
   }

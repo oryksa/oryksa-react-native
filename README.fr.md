@@ -65,6 +65,32 @@ Les liens que donne l'IA se touchent dans le chat (adresses web et e-mails), et 
 
 `onLink` existe aussi sur `OryksaChat`, `OryksaChatModal` et `OryksaVoiceScreen`.
 
+## Joindre une photo ou un document (1.1.3)
+
+Le chat a un bouton pour joindre (un trombone, activé par défaut) : une photo de la galerie, une photo de l'appareil photo ou un document (PDF, Word, texte, CSV, jusqu'à 8 Mo). L'IA regarde la photo (réduite à 1600 pixels, JPEG 80 %, jusqu'à 2 Mo) et lit le document ; la bulle du client montre la photo, ou l'icône du document et son nom. `attachments={false}` masque le bouton.
+
+React Native n'a pas de sélecteur propre, donc le SDK utilise deux bibliothèques optionnelles que votre app installe (dépendances peer optionnelles, comme celles de la voix). Chaque option n'apparaît que lorsque sa bibliothèque est là ; sans les deux, le bouton est masqué :
+
+```sh
+npm install react-native-image-picker @react-native-documents/picker
+```
+
+* `react-native-image-picker` : galerie et appareil photo. Info.plist iOS : `NSPhotoLibraryUsageDescription` et `NSCameraUsageDescription`. Android : aucune autorisation pour la galerie ; pour l'appareil photo, `CAMERA` n'est nécessaire que si votre app la déclare dans son propre manifest (accordez-la alors avant d'ouvrir l'appareil photo).
+* `@react-native-documents/picker` : documents, dans le sélecteur de documents du système (sans autorisation). Les documents sont lus avec `react-native-fs` quand il est installé, sinon avec `fetch`.
+
+```jsx
+<OryksaChatButton client={client} lang="en" attachments={false} /> {/* sans bouton pour joindre */}
+
+// Expo ou une autre stack : vos propres sélecteurs (s'il en manque un, ce choix est masqué)
+const picker = {
+  pickPhoto: () => myPhotoPicker(), // { base64, mime } réduite (1600 px, JPEG 80 %), ou null
+  pickDocument: () => myDocumentPicker(), // { base64, name, mime }, ou null
+};
+<OryksaChat client={client} picker={picker} />
+```
+
+Sans l'interface : `client.send("Voici le devis", { file: { base64, name: "devis.pdf", mime: "application/pdf" } })` (photos : `{ image: { base64, mime } }`).
+
 ## Comment ça marche (et pourquoi la clé reste en sécurité)
 
 1. Votre **serveur** garde la clé API secrète (`oryk_live_...`, créée sur developer.oryksa.com) et crée un **jeton de session** de courte durée pour chaque utilisateur connecté avec `POST /v1/sessions` (avec `@oryksa/sdk` sur Node : `oryksa.createSession(...)`).
