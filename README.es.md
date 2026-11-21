@@ -91,6 +91,26 @@ const picker = {
 
 Sin la interfaz: `client.send("Aquí está el presupuesto", { file: { base64, name: "presupuesto.pdf", mime: "application/pdf" } })` (fotos: `{ image: { base64, mime } }`).
 
+## Tus funciones de IA: `ai` (1.1.4)
+
+Haz que la IA haga lo que tu app necesita (leer una foto, extraer datos, clasificar, traducir, escribir) y paga con interacciones ORYKSA: 1 por respuesta. Tu prompt y tu JSON Schema viven en tu app; basta el token de sesión (nunca lleves la clave secreta). No crea una conversación en tu bandeja.
+
+```js
+const r = await client.ai({
+  instructions: "Read the tyre on the photo: brand, model and size exactly as written on the sidewall. " +
+    "If the size is not legible, readable=false and size=null. Never invent.",
+  images: [{ base64: photoBase64, mime: "image/jpeg" }], // resized to 1600 px
+  schema: {
+    type: "object",
+    properties: { readable: { type: "boolean" }, brand: { type: ["string", "null"] }, size: { type: ["string", "null"] } },
+    required: ["readable", "brand", "size"],
+  },
+});
+if (r.json?.readable) showProducts(r.json.size);
+```
+
+`r.text` trae la respuesta en texto, `r.json` el objeto (con schema) y `r.interactionsSpent` las interacciones usadas. Cuando se agotan las interacciones del plan, la llamada lanza `OryksaError` con el status 402.
+
 ## Cómo funciona (y por qué la clave está segura)
 
 1. Tu **servidor** guarda la clave secreta de la API (`oryk_live_...`, creada en developer.oryksa.com) y crea un **token de sesión** de corta duración para cada usuario que ha iniciado sesión, con `POST /v1/sessions` (con `@oryksa/sdk` en Node: `oryksa.createSession(...)`).

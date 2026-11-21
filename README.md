@@ -91,6 +91,26 @@ const picker = {
 
 Without the UI: `client.send("Here is the quote", { file: { base64, name: "quote.pdf", mime: "application/pdf" } })` (photos: `{ image: { base64, mime } }`).
 
+## Your own AI features: `ai` (1.1.4)
+
+Have the AI do what your app needs (read a photo, extract data, classify, translate, write) and pay with ORYKSA interactions: 1 per answer. Your prompt and your JSON Schema live in your app; the session token is enough (never ship the secret key). It does not create a conversation in your inbox.
+
+```js
+const r = await client.ai({
+  instructions: "Read the tyre on the photo: brand, model and size exactly as written on the sidewall. " +
+    "If the size is not legible, readable=false and size=null. Never invent.",
+  images: [{ base64: photoBase64, mime: "image/jpeg" }], // resized to 1600 px
+  schema: {
+    type: "object",
+    properties: { readable: { type: "boolean" }, brand: { type: ["string", "null"] }, size: { type: ["string", "null"] } },
+    required: ["readable", "brand", "size"],
+  },
+});
+if (r.json?.readable) showProducts(r.json.size);
+```
+
+`r.text` has the answer as text, `r.json` the object (with a schema), `r.interactionsSpent` the interactions used. When the plan's interactions are used up the call throws `OryksaError` with status 402.
+
 ## How it works (and why the key stays safe)
 
 1. Your **server** keeps the secret API key (`oryk_live_...`, created at developer.oryksa.com) and creates a short-lived **session token** for each signed-in user with `POST /v1/sessions` (with `@oryksa/sdk` on Node: `oryksa.createSession(...)`).

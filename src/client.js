@@ -6,7 +6,7 @@
 "use strict";
 
 const DEFAULT_BASE = "https://api.oryksa.com/v1";
-const VERSION = "1.1.3";
+const VERSION = "1.1.4";
 
 class OryksaError extends Error {
   constructor(status, code, message, extra) {
@@ -164,6 +164,19 @@ class OryksaClient {
     return this._req("POST", "/client/chat", chatBody(message, opts));
   }
 
+  /**
+   * An AI task of your own app, counted as ORYKSA interactions (1 per answer): read a photo, extract data,
+   * classify, translate, write. It never creates a conversation in the business's inbox and never acts on
+   * the account. Your prompt (instructions) and your JSON Schema (schema) live in your app.
+   * @param {{instructions?: string, input?: string, images?: {base64: string, mime?: string}[], schema?: object,
+   *          maxTokens?: number, temperature?: number}} opts  images: up to 4 photos (about 1.5 MB each; resize to 1600 px).
+   * @returns {Promise<{text: string, json: object|null, interactionsSpent: number, interactionsRemaining: number|null}>}
+   */
+  async ai(opts) {
+    const d = await this._req("POST", "/client/ai", aiBody(opts));
+    return aiResult(d);
+  }
+
   /** Like sendAndWait, but returns the whole reply object ({ status, reply, speech, whisper }). */
   async sendAndWaitReply(message, opts) {
     const o = opts || {};
@@ -249,6 +262,33 @@ function chatBody(message, opts) {
   return body;
 }
 
+/** The JSON of POST /v1/client/ai. */
+function aiBody(opts) {
+  const o = opts || {};
+  const images = Array.isArray(o.images) ? o.images : [];
+  if (!o.instructions && !o.input && !images.length) throw new Error("ai() needs instructions, input or an image.");
+  if (images.length > 4) throw new Error("ai() takes at most 4 images.");
+  const body = { platform: "rn" };
+  if (o.instructions) body.instructions = String(o.instructions);
+  if (o.input) body.input = String(o.input);
+  if (images.length) body.images = images.map((i) => ({ base64: i.base64, mime: i.mime || "image/jpeg" }));
+  if (o.schema) body.schema = o.schema;
+  if (o.maxTokens != null) body.max_tokens = o.maxTokens;
+  if (o.temperature != null) body.temperature = o.temperature;
+  return body;
+}
+
+/** Reads an ai_result answer. */
+function aiResult(d) {
+  const use = (d && d.oryksa) || {};
+  return {
+    text: (d && d.text) || "",
+    json: d && d.json && typeof d.json === "object" ? d.json : null,
+    interactionsSpent: use.interactions_spent || 0,
+    interactionsRemaining: use.interactions_remaining == null ? null : use.interactions_remaining,
+  };
+}
+
 /** JSON of an app context: { screen, title, items (up to 20) }. */
 function appContextJson(c) {
   const o = {};
@@ -264,4 +304,4 @@ function pick(map, lang) {
   return map[lang] || (lang === "br" ? map.pt : undefined) || map.en || Object.values(map)[0];
 }
 
-module.exports = { OryksaClient, OryksaError, pick, appContextJson, chatBody, multipart, VERSION, DEFAULT_BASE };
+module.exports = { OryksaClient, OryksaError, pick, appContextJson, chatBody, aiBody, aiResult, multipart, VERSION, DEFAULT_BASE };

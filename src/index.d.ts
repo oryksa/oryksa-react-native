@@ -37,6 +37,24 @@ export interface OryksaAppContext {
 
 /** A photo from the customer (JPEG, PNG or WebP, up to 2 MB). The AI looks at it. */
 export interface OryksaImage { base64: string; mime?: string }
+/** Options of OryksaClient.ai: your prompt and your JSON Schema live in your app. */
+export interface OryksaAiOptions {
+  instructions?: string;
+  input?: string;
+  /** Up to 4 photos (about 1.5 MB each; resize to 1600 px). */
+  images?: OryksaImage[];
+  /** A JSON Schema: the answer comes back in `json`. */
+  schema?: object;
+  maxTokens?: number;
+  temperature?: number;
+}
+/** The answer of OryksaClient.ai. */
+export interface OryksaAiResult {
+  text: string;
+  json: Record<string, unknown> | null;
+  interactionsSpent: number;
+  interactionsRemaining: number | null;
+}
 
 /** A document from the customer (PDF, Word, text or CSV, up to 8 MB). The AI reads it. */
 export interface OryksaFile { base64: string; name: string; mime?: string }
@@ -90,6 +108,8 @@ export declare class OryksaClient {
   agent(): Promise<OryksaAgent>;
   /** Title and picture of a link the AI gave (only the pages of the business's own site); null when it cannot be read, never throws. */
   linkPreview(url: string): Promise<OryksaLinkPreview | null>;
+  /** An AI task of your own app, counted as ORYKSA interactions (1 per answer). Never creates a conversation. */
+  ai(opts: OryksaAiOptions): Promise<OryksaAiResult>;
   send(message: string, opts?: OryksaSendOptions): Promise<OryksaReply>;
   sendAndWait(message: string, opts?: OryksaSendOptions | number): Promise<string | null>;
   sendAndWaitReply(message: string, opts?: OryksaSendOptions): Promise<OryksaReply>;
