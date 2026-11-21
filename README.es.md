@@ -49,6 +49,22 @@ Cada respuesta de la IA tiene un botón de copiar debajo. Usa `@react-native-cli
   appContext={() => ({ screen: "product", title: "Sky Beginner Snowboard, 489.95" })} />
 ```
 
+## Enlaces con botón Abrir (1.1.3)
+
+Los enlaces que da la IA se pueden tocar en el chat (direcciones web y e-mails), y cada enlace web tiene una tarjeta debajo de su respuesta con la foto y el título de la página y un botón **Abrir** (las páginas de tu propio sitio, los dominios de tu chat web; otros sitios muestran la dirección). La pantalla de voz muestra lo que ella dice sin las direcciones, con las mismas tarjetas; tocar Abrir cierra la pantalla de voz. Pasa `onLink` para abrir tus propias pantallas, por ejemplo la página del producto: devuelve true cuando tu app lo abrió, false para que lo abra el sistema (`Linking.openURL`).
+
+```jsx
+<OryksaChatButton client={client} lang="es"
+  onLink={(url) => {
+    const id = myProductIdOf(url); // tus rutas
+    if (!id) return false;
+    navigation.navigate("Product", { id });
+    return true;
+  }} />
+```
+
+`onLink` también está en `OryksaChat`, `OryksaChatModal` y `OryksaVoiceScreen`.
+
 ## Cómo funciona (y por qué la clave está segura)
 
 1. Tu **servidor** guarda la clave secreta de la API (`oryk_live_...`, creada en developer.oryksa.com) y crea un **token de sesión** de corta duración para cada usuario que ha iniciado sesión, con `POST /v1/sessions` (con `@oryksa/sdk` en Node: `oryksa.createSession(...)`).

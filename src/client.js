@@ -6,7 +6,7 @@
 "use strict";
 
 const DEFAULT_BASE = "https://api.oryksa.com/v1";
-const VERSION = "1.1.2";
+const VERSION = "1.1.3";
 
 class OryksaError extends Error {
   constructor(status, code, message, extra) {
@@ -106,6 +106,7 @@ class OryksaClient {
     this._base = String(o.baseUrl || DEFAULT_BASE).replace(/\/$/, "");
     this._fetch = o.fetch;
     this._timeout = o.timeoutMs || 60000;
+    this._previews = new Map();
   }
 
   async _tok(force) {
@@ -127,6 +128,27 @@ class OryksaClient {
 
   /** Name, photo, greeting and suggestions of the AI employee. */
   agent() { return this._req("GET", "/client/agent"); }
+
+  /**
+   * Title and picture of a link the AI gave, for the card under her reply:
+   * { object: "link_preview", url, title, image, site, price }. Only the pages of the business's own
+   * site (its website chat domains) get a title and a picture. Resolves null when it cannot be read;
+   * never throws. Kept in memory for this client.
+   */
+  async linkPreview(url) {
+    const key = String(url || "");
+    if (this._previews.has(key)) return this._previews.get(key);
+    try {
+      const d = await this._req("GET", "/client/link-preview?url=" + encodeURIComponent(key));
+      const str = (v) => (v === null || v === undefined ? "" : String(v));
+      const p = { object: "link_preview", url: str(d.url), title: str(d.title), image: str(d.image), site: str(d.site), price: str(d.price) };
+      if (this._previews.size > 200) this._previews.clear();
+      this._previews.set(key, p);
+      return p;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /**
    * Sends a message. status is "pending" when the AI needs a few more seconds: use sendAndWait.

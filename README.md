@@ -49,6 +49,22 @@ Each reply of the AI has a copy button under it. It uses `@react-native-clipboar
   appContext={() => ({ screen: "product", title: "Sky Beginner Snowboard, 489.95" })} />
 ```
 
+## Links with an Open button (1.1.3)
+
+The links the AI gives can be tapped in the chat (web addresses and e-mails), and each web link gets a card under her reply with the picture and title of the page and an **Open** button (the pages of your own site, the domains of your website chat; other sites show the address). The voice screen shows what she says without the addresses, with the same cards; tapping Open closes the voice screen. Pass `onLink` to open your own screens, for example your product page: return true when your app opened it, false to let the system open it (`Linking.openURL`).
+
+```jsx
+<OryksaChatButton client={client} lang="en"
+  onLink={(url) => {
+    const id = myProductIdOf(url); // your routes
+    if (!id) return false;
+    navigation.navigate("Product", { id });
+    return true;
+  }} />
+```
+
+`onLink` is also on `OryksaChat`, `OryksaChatModal` and `OryksaVoiceScreen`.
+
 ## How it works (and why the key stays safe)
 
 1. Your **server** keeps the secret API key (`oryk_live_...`, created at developer.oryksa.com) and creates a short-lived **session token** for each signed-in user with `POST /v1/sessions` (with `@oryksa/sdk` on Node: `oryksa.createSession(...)`).

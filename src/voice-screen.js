@@ -7,6 +7,8 @@
 const React = require("react");
 const RN = require("react-native");
 const { OryksaVoiceController } = require("./voice");
+const { withoutLinks } = require("./links");
+const { OryksaLinkCards } = require("./link-card");
 
 const h = React.createElement;
 const { View, Text, Image, Pressable, Modal, SafeAreaView, StyleSheet, Animated, Easing } = RN;
@@ -17,35 +19,37 @@ const VX = {
     micError: "Microphone unavailable", micErrorSub: "Allow microphone access, or close other apps using it.",
     noisy: "Too much background noise", noisySub: "I cannot tell your voice from the noise. Move somewhere quieter, or type to me.",
     notUnderstood: "I could not understand", notUnderstoodSub: "Say it again, please.",
-    tapToSend: "Tap the picture to send what you said.", mute: "Mute", unmute: "Unmute", close: "Close" },
+    tapToSend: "Tap the picture to send what you said.", mute: "Mute", unmute: "Unmute", close: "Close", open: "Open" },
   pt: { listening: "Estou a ouvir", listeningSub: "Fala comigo. Podes interromper-me quando quiseres.", hearing: "Continua, estou a ouvir.",
     thinking: "Um momento...", muted: "Em pausa", mutedSub: "Toca no microfone para voltar a falar.",
     micError: "Microfone indisponível", micErrorSub: "Permite o acesso ao microfone, ou fecha outras apps que o estejam a usar.",
     noisy: "Demasiado barulho", noisySub: "Não consigo distinguir a tua voz do barulho. Vai para um sítio mais calmo, ou escreve-me.",
     notUnderstood: "Não percebi", notUnderstoodSub: "Diz outra vez, por favor.",
-    tapToSend: "Toca na imagem para enviar o que disseste.", mute: "Silenciar", unmute: "Ativar som", close: "Fechar" },
+    tapToSend: "Toca na imagem para enviar o que disseste.", mute: "Silenciar", unmute: "Ativar som", close: "Fechar", open: "Abrir" },
   br: { listening: "Estou ouvindo", listeningSub: "Fale comigo. Você pode me interromper quando quiser.", hearing: "Continue, estou ouvindo.",
     thinking: "Um momento...", muted: "Em pausa", mutedSub: "Toque no microfone para voltar a falar.",
     micError: "Microfone indisponível", micErrorSub: "Permita o acesso ao microfone, ou feche outros apps que estejam usando.",
     noisy: "Barulho demais", noisySub: "Não consigo separar sua voz do barulho. Vá para um lugar mais calmo, ou digite para mim.",
     notUnderstood: "Não entendi", notUnderstoodSub: "Fale de novo, por favor.",
-    tapToSend: "Toque na imagem para enviar o que você disse.", mute: "Silenciar", unmute: "Ativar som", close: "Fechar" },
+    tapToSend: "Toque na imagem para enviar o que você disse.", mute: "Silenciar", unmute: "Ativar som", close: "Fechar", open: "Abrir" },
   es: { listening: "Te escucho", listeningSub: "Háblame. Puedes interrumpirme cuando quieras.", hearing: "Sigue, te escucho.",
     thinking: "Un momento...", muted: "En pausa", mutedSub: "Toca el micrófono para volver a hablar.",
     micError: "Micrófono no disponible", micErrorSub: "Permite el acceso al micrófono, o cierra otras apps que lo estén usando.",
     noisy: "Demasiado ruido", noisySub: "No distingo tu voz del ruido. Ve a un sitio más tranquilo, o escríbeme.",
     notUnderstood: "No te entendí", notUnderstoodSub: "Dilo otra vez, por favor.",
-    tapToSend: "Toca la imagen para enviar lo que dijiste.", mute: "Silenciar", unmute: "Activar sonido", close: "Cerrar" },
+    tapToSend: "Toca la imagen para enviar lo que dijiste.", mute: "Silenciar", unmute: "Activar sonido", close: "Cerrar", open: "Abrir" },
 };
 
 const FALLBACK_AVATAR = "https://oryksa.com/assets/img/avatar_official_oryksa.png";
 
 /**
  * Full-screen voice conversation. Props: client, agent ({ name, avatar, business }), visible, onClose,
- * lang, theme, appContext (() => ({ screen, title, items })), onUserText, onReply, audio (adapter).
+ * lang, theme, appContext (() => ({ screen, title, items })), onUserText, onReply, audio (adapter),
+ * onLink ((url) => boolean: true when your app opened the link; the links of her answer show as cards
+ * with an Open button, and tapping one closes the voice screen).
  */
 function OryksaVoiceScreen(props) {
-  const { client, agent, visible, onClose, lang = "en", theme, appContext, onUserText, onReply, audio } = props;
+  const { client, agent, visible, onClose, lang = "en", theme, appContext, onUserText, onReply, audio, onLink } = props;
   const th = Object.assign({ accent: "#5B57E0", ink: "#161B3D", soft: "#EEEBFB", background: "#FFFFFF", muted: "#6B7280" }, theme || {});
   const t = VX[lang] || VX.en;
   const [phase, setPhase] = React.useState("starting");
@@ -69,7 +73,8 @@ function OryksaVoiceScreen(props) {
   const pick = {
     starting: [t.listening, t.listeningSub], listening: [t.listening, t.listeningSub], hearing: [t.listening, t.hearing],
     // never the words the person said on screen: only "listening" in the interface language; her answer shows as text
-    thinking: [t.listening, t.thinking], speaking: [(agent && agent.name) || "ORYKSA", (ctl && ctl.lastReply) || ""],
+    // what she says out loud, without the addresses: the links are the cards below (owner 2026-11-21)
+    thinking: [t.listening, t.thinking], speaking: [(agent && agent.name) || "ORYKSA", withoutLinks((ctl && (ctl.lastSpoken || ctl.lastReply)) || "")],
     muted: [t.muted, t.mutedSub], micError: [t.micError, t.micErrorSub], noisy: [t.noisy, t.noisySub],
     notUnderstood: [t.notUnderstood, t.notUnderstoodSub],
   }[phase] || [t.listening, t.listeningSub];
@@ -94,7 +99,8 @@ function OryksaVoiceScreen(props) {
           ring(236, 0.06), ring(184, 0.09), ring(136, 0.13),
           h(Image, { source: { uri: photo }, style: st.photo })),
         h(Text, { style: [st.title, { color: th.ink }] }, pick[0]),
-        h(Text, { style: [st.sub, { color: th.muted }] }, pick[1]),
+        h(Text, { style: [st.sub, { color: th.muted }], numberOfLines: 7 }, pick[1]),
+        h(OryksaLinkCards, { text: (ctl && ctl.lastReply) || "", client, openLabel: t.open, onLink, onOpened: close, theme: th, style: st.card }),
         phase === "hearing" ? h(Text, { style: st.tap }, t.tapToSend) : null,
         h(View, { style: st.row },
           btn(h(MicIcon, { color: th.muted, crossed: phase === "muted" }), phase === "muted" ? t.unmute : t.mute, false, () => ctlRef.current && ctlRef.current.toggleMute(), th),
@@ -132,6 +138,7 @@ const st = StyleSheet.create({
   photo: { width: 124, height: 124, borderRadius: 62 },
   title: { marginTop: 14, fontSize: 22, fontWeight: "700", textAlign: "center" },
   sub: { marginTop: 8, fontSize: 13.5, lineHeight: 20, textAlign: "center" },
+  card: { alignSelf: "stretch", marginTop: 10 },
   tap: { marginTop: 10, fontSize: 11.5, color: "#AAB0CC" },
   row: { flexDirection: "row", gap: 46, marginTop: 20 },
   cbtn: { width: 58, height: 58, borderRadius: 29, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },

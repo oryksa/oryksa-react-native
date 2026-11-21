@@ -1,6 +1,6 @@
 {
   "name": "@oryksa/react-native",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Official React Native SDK for ORYKSA AI Employees: a ready in-app AI chat and voice (the same as the ORYKSA app), and a client for the ORYKSA API v1.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -13,7 +13,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js && node test/profanity.test.js"
+    "test": "node test/client.test.js && node test/vad.test.js && node test/voice.test.js && node test/profanity.test.js && node test/links.test.js"
   },
   "peerDependencies": {
     "react": ">=17.0.0",

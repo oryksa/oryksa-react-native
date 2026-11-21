@@ -10,36 +10,48 @@ const RN = require("react-native");
 const { pick } = require("./client");
 const { OryksaVoiceScreen, MicIcon } = require("./voice-screen");
 const { createDefaultAudio } = require("./voice");
+const { richParts, openLink } = require("./links");
+const { OryksaLinkCards } = require("./link-card");
 const profanity = require("./profanity");
 
 const h = React.createElement;
 const { View, Text, TextInput, Image, Pressable, FlatList, Modal, KeyboardAvoidingView, Platform, StyleSheet, SafeAreaView, useWindowDimensions } = RN;
 
 const TX = {
-  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again.", voice: "Talk by voice", copy: "Copy" },
-  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo.", voice: "Falar por voz", copy: "Copiar" },
-  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo.", voice: "Falar por voz", copy: "Copiar" },
-  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo.", voice: "Hablar por voz", copy: "Copiar" },
+  en: { talk: "Talk to", ph: "Type your question", send: "Send", err: "Sorry, something went wrong. Try again.", voice: "Talk by voice", copy: "Copy", open: "Open" },
+  pt: { talk: "Falar com", ph: "Escreve a tua pergunta", send: "Enviar", err: "Desculpa, algo correu mal. Tenta de novo.", voice: "Falar por voz", copy: "Copiar", open: "Abrir" },
+  br: { talk: "Falar com", ph: "Digite sua pergunta", send: "Enviar", err: "Desculpe, algo deu errado. Tente de novo.", voice: "Falar por voz", copy: "Copiar", open: "Abrir" },
+  es: { talk: "Hablar con", ph: "Escribe tu pregunta", send: "Enviar", err: "Lo siento, algo salió mal. Inténtalo de nuevo.", voice: "Hablar por voz", copy: "Copiar", open: "Abrir" },
 };
 const DEFAULT_THEME = { accent: "#5B57E0", ink: "#161B3D", soft: "#EEEBFB", background: "#FFFFFF", muted: "#6B7280" };
 const FALLBACK_AVATAR = "https://oryksa.com/assets/img/avatar_official_oryksa.png";
 const L = (lang) => (TX[lang] ? lang : "en");
 
-/** Text with **bold** parts (the server marks them, the app only draws them). */
-function bold(text, style) {
-  const parts = String(text).split("**");
-  if (parts.length < 3) return text;
-  return parts.map((p, i) => (p ? (i % 2 === 1 ? h(Text, { key: i, style: [style, { fontWeight: "700" }] }, p) : p) : null));
+/**
+ * Text with **bold** parts (the server marks them, the app only draws them) and links (web and
+ * e-mail) the customer can tap: underlined, in linkColor; onLink first, then the system opens them.
+ */
+function rich(text, style, linkColor, onLink) {
+  return richParts(text).map((p, i) => {
+    const b = p.bold ? { fontWeight: "700" } : null;
+    if (p.url) {
+      const url = p.url;
+      return h(Text, { key: i, onPress: () => openLink(url, onLink), accessibilityRole: "link",
+        style: [style, b, { color: linkColor, textDecorationLine: "underline" }] }, p.text);
+    }
+    return b ? h(Text, { key: i, style: [style, b] }, p.text) : p.text;
+  });
 }
 
 /**
  * The chat panel: header with the photo and name of the AI, messages, suggestions, input and (when
  * the plan has voice and an audio adapter is available) the microphone that opens the voice screen.
  * Props: client, lang, theme, onClose, appContext (() => ({ screen, title, items })), voice (default
- * true), audio (adapter; default: react-native-live-audio-stream + react-native-sound + react-native-fs).
+ * true), audio (adapter; default: react-native-live-audio-stream + react-native-sound + react-native-fs),
+ * onLink ((url) => boolean: true when your app opened a link the AI gave; otherwise the system opens it).
  */
 function OryksaChat(props) {
-  const { client, lang = "en", theme, onClose, appContext, voice = true } = props;
+  const { client, lang = "en", theme, onClose, appContext, voice = true, onLink } = props;
   const audio = React.useMemo(() => props.audio || createDefaultAudio(), [props.audio]);
   const [voiceOpen, setVoiceOpen] = React.useState(false);
   const th = Object.assign({}, DEFAULT_THEME, theme || {});
@@ -112,10 +124,14 @@ function OryksaChat(props) {
       renderItem: ({ item }) => {
         const mine = item.role === "user";
         const bubble = h(View, { style: [s.bubble, mine ? [s.me, { backgroundColor: th.accent }] : [s.ai, { backgroundColor: th.soft }], item.role === "typing" ? { opacity: 0.6 } : null] },
-          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } }, bold(mine ? profanity.mask(item.text, L(lang)) : item.text, { color: mine ? "#fff" : th.ink })));
+          h(Text, { selectable: true, style: { color: mine ? "#fff" : th.ink, fontSize: 14, lineHeight: 21 } },
+            rich(mine ? profanity.mask(item.text, L(lang)) : item.text, { color: mine ? "#fff" : th.ink }, mine ? "#fff" : th.accent, onLink)));
         if (mine || item.role === "typing" || !String(item.text || "").trim()) return bubble;
-        // Copy button under each reply of the AI (same as the ORYKSA apps and extension).
-        return h(View, null, bubble, h(CopyButton, { text: String(item.text).replace(/\*\*/g, ""), label: tx.copy, color: th.muted }));
+        // A card with an Open button for each link of the reply (owner 2026-11-21: the links were plain text),
+        // then the copy button (same as the ORYKSA apps and extension).
+        return h(View, null, bubble,
+          h(OryksaLinkCards, { text: item.text, client, openLabel: tx.open, onLink, theme: th, style: s.card }),
+          h(CopyButton, { text: String(item.text).replace(/\*\*/g, ""), label: tx.copy, color: th.muted }));
       },
     }),
     sug.length ? h(View, { style: s.sug }, sug.map((q) =>
@@ -133,7 +149,7 @@ function OryksaChat(props) {
         h(Text, { style: s.sendTxt }, tx.send.toUpperCase()))),
     h(Text, { style: s.pw }, "POWERED BY ", h(Text, { style: { color: th.accent, fontWeight: "800" } }, "ORYKSA")),
     voiceOpen ? h(OryksaVoiceScreen, {
-      client, agent, visible: true, lang: L(lang), theme: th, appContext, audio,
+      client, agent, visible: true, lang: L(lang), theme: th, appContext, audio, onLink,
       onClose: () => setVoiceOpen(false),
       onUserText: (t) => { setSug([]); setMsgs((m) => m.concat([{ id: "v" + Date.now() + "u", role: "user", text: t }])); },
       onReply: (t) => setMsgs((m) => m.concat([{ id: "v" + Date.now() + "a", role: "assistant", text: t }])),
@@ -152,7 +168,7 @@ function OryksaChatModal(props) {
 
 /** Floating "Talk to name" button with the photo of the AI. Opens the chat. */
 function OryksaChatButton(props) {
-  const { client, lang = "en", theme, position = "right", style, appContext, voice, audio } = props;
+  const { client, lang = "en", theme, position = "right", style, appContext, voice, audio, onLink } = props;
   const th = Object.assign({}, DEFAULT_THEME, theme || {});
   const [agent, setAgent] = React.useState(null);
   const [open, setOpen] = React.useState(false);
@@ -169,7 +185,7 @@ function OryksaChatButton(props) {
     },
       h(Image, { source: { uri: (agent && agent.avatar) || FALLBACK_AVATAR }, style: s.fabImg }),
       h(Text, { style: s.fabTxt }, (tx.talk + " " + ((agent && agent.name) || "ORYKSA")).toUpperCase())),
-    h(OryksaChatModal, { client, lang, theme, appContext, voice, audio, visible: open, onClose: () => setOpen(false) }));
+    h(OryksaChatModal, { client, lang, theme, appContext, voice, audio, onLink, visible: open, onClose: () => setOpen(false) }));
 }
 
 /** Copies text: @react-native-clipboard/clipboard when installed, else the Clipboard of older React Native. */
@@ -205,6 +221,7 @@ const s = StyleSheet.create({
   close: { fontSize: 26, paddingHorizontal: 6 },
   bubble: { maxWidth: "82%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginBottom: 10 },
   copy: { alignSelf: "flex-start", padding: 6, marginTop: -6, marginBottom: 6, borderRadius: 7 },
+  card: { width: "86%", marginTop: -4, marginBottom: 10 },
   ai: { alignSelf: "flex-start", borderBottomLeftRadius: 6 },
   me: { alignSelf: "flex-end", borderBottomRightRadius: 6 },
   sug: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 10 },

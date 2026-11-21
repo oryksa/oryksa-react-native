@@ -56,6 +56,8 @@ function fakeClient() {
   assert.strictEqual(client.sent[0].o.voiceStats.channel, "sdk_rn");
   assert.ok(replies[0].startsWith("**A vela**"), "the whole reply goes to the chat");
   assert.strictEqual(client.spoken[0].text, "A vela custa 59,90.", "she speaks the short version");
+  assert.strictEqual(ctl.lastSpoken, "A vela custa 59,90.", "the voice screen shows what she said");
+  assert.ok(ctl.lastReply.startsWith("**A vela**"), "the cards come from the whole reply");
   assert.strictEqual(ctl.phase, "speaking");
   assert.ok(phases.includes("hearing") && phases.includes("thinking"));
 

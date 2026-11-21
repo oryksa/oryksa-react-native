@@ -153,6 +153,8 @@ class OryksaVoiceController {
     this.vad = new Vad(SR);
     this.phase = "starting";
     this.lastReply = "";
+    /** What she said out loud last (the short spoken version of lastReply). */
+    this.lastSpoken = "";
     this.lastHeard = "";
     this._pcm = [];
     this._pcmBytes = 0;
@@ -281,14 +283,19 @@ class OryksaVoiceController {
     if (this._closed || my !== this._turn) return;
     const reply = String((r && r.reply) || "").trim();
     if (!reply) { this._busy = false; this._set("notUnderstood"); return; }
-    this.lastReply = reply;
-    if (this.onReply) this.onReply(reply);
     const speech = String((r && r.speech) || "").trim();
+    this.lastReply = reply;
+    this.lastSpoken = speech || reply;
+    if (this.onReply) this.onReply(reply);
     await this._speak(speech || reply, my);
   }
 
   /** Speaks text with the AI's voice (for example a greeting). If the voice fails she stays silent. */
-  say(text) { return this._speak(text, ++this._turn); }
+  say(text) {
+    this.lastReply = text;
+    this.lastSpoken = text;
+    return this._speak(text, ++this._turn);
+  }
 
   async _speak(text, my) {
     this._before = []; this._beforeBytes = 0;

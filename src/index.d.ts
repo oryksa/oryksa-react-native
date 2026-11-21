@@ -55,9 +55,31 @@ export interface OryksaReply {
   whisper?: boolean;
 }
 
+/** Title and picture of a link of the business's own site (OryksaClient.linkPreview). */
+export interface OryksaLinkPreview {
+  object: "link_preview";
+  url: string;
+  /** Title of the page (empty for other sites). */
+  title: string;
+  /** Picture of the page (empty when it has none). */
+  image: string;
+  /** Name of the site. */
+  site: string;
+  /** Price, when the page says it (shops). */
+  price: string;
+}
+
+/**
+ * What your app does with a link the AI gave (a product, a service, a page). Return true when your app
+ * opened it itself (for example its own product screen); return false and the system opens it.
+ */
+export type OryksaLinkHandler = (url: string) => boolean;
+
 export declare class OryksaClient {
   constructor(opts: { token?: string; getToken?: () => Promise<string>; baseUrl?: string; fetch?: typeof fetch; timeoutMs?: number });
   agent(): Promise<OryksaAgent>;
+  /** Title and picture of a link the AI gave (only the pages of the business's own site); null when it cannot be read, never throws. */
+  linkPreview(url: string): Promise<OryksaLinkPreview | null>;
   send(message: string, opts?: OryksaSendOptions): Promise<OryksaReply>;
   sendAndWait(message: string, opts?: OryksaSendOptions | number): Promise<string | null>;
   sendAndWaitReply(message: string, opts?: OryksaSendOptions): Promise<OryksaReply>;
@@ -96,6 +118,8 @@ export declare class OryksaVoiceController {
   });
   phase: OryksaVoicePhase;
   lastReply: string;
+  /** What she said out loud last (the short spoken version of lastReply). */
+  lastSpoken: string;
   lastHeard: string;
   start(): Promise<void>;
   sendNow(): void;
@@ -140,6 +164,8 @@ interface OryksaChatVoiceProps {
   voice?: boolean;
   /** Audio adapter (default: createDefaultAudio()). */
   audio?: OryksaAudio | null;
+  /** What your app does with a link the AI gave: return true when your app opened it, false to let the system open it. */
+  onLink?: OryksaLinkHandler;
 }
 
 export declare function OryksaChat(props: { client: OryksaClient; lang?: OryksaLang; theme?: OryksaTheme; onClose?: () => void } & OryksaChatVoiceProps): React.ReactElement;
@@ -148,4 +174,21 @@ export declare function OryksaChatButton(props: { client: OryksaClient; lang?: O
 export declare function OryksaVoiceScreen(props: {
   client: OryksaClient; agent: OryksaAgent; visible: boolean; onClose: () => void; lang?: OryksaLang; theme?: OryksaTheme;
   appContext?: () => OryksaAppContext | undefined; onUserText?: (text: string) => void; onReply?: (text: string) => void; audio?: OryksaAudio | null;
+  /** What your app does with a link the AI gave; tapping Open on a card closes the voice screen first. */
+  onLink?: OryksaLinkHandler;
 }): React.ReactElement;
+
+/** The card under a reply for one link: the picture and title of the page and an Open button. */
+export declare function OryksaLinkCard(props: {
+  url: string; client: OryksaClient; openLabel?: string; onLink?: OryksaLinkHandler; onOpened?: () => void;
+  theme?: OryksaTheme & { line?: string }; style?: StyleProp<ViewStyle>;
+}): React.ReactElement;
+
+/** The distinct web links of text, in order, without the final punctuation (at most max, 3 by default). */
+export declare function linksIn(text: string, max?: number): string[];
+
+/** text without its web links (what the voice screen shows while she speaks). */
+export declare function withoutLinks(text: string): string;
+
+/** Opens a link: handler first (true = your app opened it), then the system (Linking.openURL). */
+export declare function openLink(url: string, handler?: OryksaLinkHandler): void;
